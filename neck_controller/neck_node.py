@@ -31,10 +31,12 @@ class DynamixelHandler:
         if not self.portHandler.setBaudRate(baud):
             raise RuntimeError("Failed to set baudrate")
         
+        # Set velocity and acceleration profile for each joint
         for dxl_id in self.ids.values():
             self.packetHandler.write4ByteTxRx(self.portHandler, dxl_id, ADDR_PROFILE_VELOCITY, PROFILE_VELOCITY)
             self.packetHandler.write4ByteTxRx(self.portHandler, dxl_id, ADDR_PROFILE_ACCELERATION, PROFILE_ACCELERATION)
 
+        # Enable torque for each joint
         ADDR_TORQUE_ENABLE = 64
         for dxl_id in self.ids.values():
             self.packetHandler.write1ByteTxRx(self.portHandler, dxl_id, ADDR_TORQUE_ENABLE, 1)
@@ -50,7 +52,6 @@ class DynamixelHandler:
     def set_joint(self, joint_name, rad):
         dxl_pos = self.radians_to_dxl(rad)
         dxl_id = self.ids[joint_name]
-        # Address for Goal Position
         ADDR_GOAL_POSITION = 116
         self.packetHandler.write4ByteTxRx(self.portHandler, dxl_id, ADDR_GOAL_POSITION, dxl_pos)
         self.joint_pos[joint_name] = rad
@@ -76,6 +77,7 @@ class NeckJointController(Node):
 
         # --- Subscriber for command
         self.sub_cmd = self.create_subscription(
+            # TODO: Use joint_state msgs instead of Float64MultiArray
             Float64MultiArray,
             '/neck_controller/command',
             self.command_callback,
@@ -83,6 +85,7 @@ class NeckJointController(Node):
         )
         # --- Publisher for state
         self.pub_state = self.create_publisher(
+            # TODO: Use joint_state msgs instead of Float64MultiArray
             Float64MultiArray,
             '/neck_controller/state',
             10
